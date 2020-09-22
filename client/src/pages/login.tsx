@@ -25,7 +25,9 @@ const Login: React.FC<registerProps> = ({}) => {
             setErrors(toErrorMap(response.data.login.errors));
           } else if (response.data?.login.user) {
             // worked
-            router.push('/');
+            router.push(
+              typeof router.query.next === 'string' ? router.query.next : '/'
+            );
           }
         }}
       >
