@@ -13,8 +13,6 @@ export const NavBar: React.FC<NavBarProps> = ({}) => {
   });
   let body = null;
 
-  console.log('data: ', data);
-
   if (fetching) {
     // data is loading
   } else if (!data?.me) {
@@ -48,7 +46,7 @@ export const NavBar: React.FC<NavBarProps> = ({}) => {
   }
 
   return (
-    <Flex bg="tan" p={4}>
+    <Flex zIndex={1} position="sticky" top={0} bg="tan" p={4}>
       <Box ml={'auto'}>{body}</Box>
     </Flex>
   );
