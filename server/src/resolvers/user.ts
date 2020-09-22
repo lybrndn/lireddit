@@ -146,7 +146,6 @@ export class UserResolver {
       })
         .returning('*')
         .execute();
-      console.log('result: ', result);
       user = result.raw[0];
     } catch (err) {
       if (err.code === '23505') { //|| err.detail.includes('already exists')) {
@@ -159,7 +158,7 @@ export class UserResolver {
           ]
         }
       }
-      console.log('message: ', err.message)
+      console.error('message: ', err.message)
     }
 
     // store user id session
@@ -218,7 +217,7 @@ export class UserResolver {
       req.session.destroy(err => {
         res.clearCookie(COOKIE_NAME);
         if (err) {
-          console.log(err);
+          console.error(err);
           resolve(false);
           return;
         }

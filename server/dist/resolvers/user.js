@@ -135,7 +135,6 @@ let UserResolver = class UserResolver {
                 })
                     .returning('*')
                     .execute();
-                console.log('result: ', result);
                 user = result.raw[0];
             }
             catch (err) {
@@ -149,7 +148,7 @@ let UserResolver = class UserResolver {
                         ]
                     };
                 }
-                console.log('message: ', err.message);
+                console.error('message: ', err.message);
             }
             req.session.userId = user.id;
             return { user };
@@ -191,7 +190,7 @@ let UserResolver = class UserResolver {
         return new Promise((resolve) => req.session.destroy(err => {
             res.clearCookie(constants_1.COOKIE_NAME);
             if (err) {
-                console.log(err);
+                console.error(err);
                 resolve(false);
                 return;
             }
