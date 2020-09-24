@@ -29,6 +29,39 @@ export class PostResolver {
     return root.text.slice(0, 50);
   }
 
+  @Mutation(() => Boolean)
+  @UseMiddleware(isAuth)
+  async vote(
+    @Arg('postId', () => Int) postId: number,
+    @Arg('value', () => Int) value: number,
+    @Ctx() { req }: MyContext
+  ) {
+    const isUpdoot = value !== -1;
+    const realValue = isUpdoot ? 1 : -1;
+    const { userId } = req.session;
+
+    // await Updoot.insert({
+    //   userId,
+    //   postId,
+    //   value: realValue,
+    // });
+
+    await getConnection().query(`
+    START TRANSACTION;
+
+    INSERT INTO updoot ("userId", "postId", value)
+    VALUES (${userId}, ${postId}, ${realValue});
+
+    UPDATE post
+    SET points = points + ${realValue}
+    WHERE id = ${postId};
+
+    COMMIT;
+    `);
+
+    return true;
+  }
+
   @Query(() => PaginatedPosts)
   async posts(
     @Arg('limit', () => Int) limit: number,
@@ -74,7 +107,7 @@ export class PostResolver {
     // }
 
     // const posts = await qb.getMany();
-    console.log('posts: ', posts);
+    // console.log('posts: ', posts);
 
     return {
       posts: posts.slice(0, realLimit),
