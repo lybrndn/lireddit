@@ -80,7 +80,7 @@ export class PostResolver {
   @Query(() => PaginatedPosts)
   async posts(
     @Arg('limit', () => Int) limit: number,
-    @Arg('cursor', () => String, { nullable: true }) cursor: string | null
+    @Arg('cursor', () => String, { nullable: true }) cursor: string | null,
     @Ctx() { req }: MyContext
   ): Promise<PaginatedPosts> {
     // 20 -> 21
@@ -142,8 +142,8 @@ export class PostResolver {
   }
 
   @Query(() => Post, { nullable: true })
-  post(@Arg('id') id: number): Promise<Post | undefined> {
-    return Post.findOne(id);
+  post(@Arg('id', () => Int) id: number): Promise<Post | undefined> {
+    return Post.findOne(id, { relations: ['creator'] });
   }
 
   @Mutation(() => Post)
