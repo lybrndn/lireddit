@@ -57,6 +57,17 @@ let PostResolver = class PostResolver {
     textSnippet(root) {
         return root.text.slice(0, 50);
     }
+    creator(post, { userLoader }) {
+        return userLoader.load(post.creatorId);
+    }
+    voteStatus(post, { updootLoader, req }) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!req.session.userId)
+                return null;
+            const updoot = yield updootLoader.load({ postId: post.id, userId: req.session.userId });
+            return updoot ? updoot.value : null;
+        });
+    }
     vote(postId, value, { req }) {
         return __awaiter(this, void 0, void 0, function* () {
             const isUpdoot = value !== -1;
@@ -93,34 +104,18 @@ let PostResolver = class PostResolver {
             return true;
         });
     }
-    posts(limit, cursor, { req }) {
+    posts(limit, cursor) {
         return __awaiter(this, void 0, void 0, function* () {
             const realLimit = Math.min(50, limit);
             const realLimitPlusOne = realLimit + 1;
             const replacements = [realLimitPlusOne];
-            if (req.session.userId) {
-                replacements.push(req.session.userId);
-            }
-            let cursorIndex = 3;
             if (cursor) {
                 replacements.push(new Date(parseInt(cursor)));
-                cursorIndex = replacements.length;
             }
             const posts = yield typeorm_1.getConnection().query(`
-    SELECT p.*, 
-      json_build_object(
-        'id', u.id,
-        'username', u.username,
-        'email', u.email,
-        'createdAt', u."createdAt",
-        'updatedAt', u."updatedAt"
-      ) creator,
-    ${req.session.userId
-                ? '(SELECT value FROM updoot WHERE "userId" = $2 AND "postId" = p.id) "voteStatus"'
-                : 'NULL AS "voteStatus"'}
+    SELECT p.*
     FROM post p
-    INNER JOIN public.user u ON u.id = p."creatorId"
-    ${cursor ? `WHERE p."createdAt" < $${cursorIndex}` : ''}
+    ${cursor ? `WHERE p."createdAt" < $2` : ''}
     ORDER BY p."createdAt" DESC
     LIMIT $1
     `, replacements);
@@ -131,7 +126,7 @@ let PostResolver = class PostResolver {
         });
     }
     post(id) {
-        return Post_1.Post.findOne(id, { relations: ['creator'] });
+        return Post_1.Post.findOne(id);
     }
     createPost(input, { req }) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -168,6 +163,20 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], PostResolver.prototype, "textSnippet", null);
 __decorate([
+    type_graphql_1.FieldResolver(() => String),
+    __param(0, type_graphql_1.Root()), __param(1, type_graphql_1.Ctx()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Post_1.Post, Object]),
+    __metadata("design:returntype", void 0)
+], PostResolver.prototype, "creator", null);
+__decorate([
+    type_graphql_1.FieldResolver(() => type_graphql_1.Int, { nullable: true }),
+    __param(0, type_graphql_1.Root()), __param(1, type_graphql_1.Ctx()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Post_1.Post, Object]),
+    __metadata("design:returntype", Promise)
+], PostResolver.prototype, "voteStatus", null);
+__decorate([
     type_graphql_1.Mutation(() => Boolean),
     type_graphql_1.UseMiddleware(isAuth_1.isAuth),
     __param(0, type_graphql_1.Arg('postId', () => type_graphql_1.Int)),
@@ -181,9 +190,8 @@ __decorate([
     type_graphql_1.Query(() => PaginatedPosts),
     __param(0, type_graphql_1.Arg('limit', () => type_graphql_1.Int)),
     __param(1, type_graphql_1.Arg('cursor', () => String, { nullable: true })),
-    __param(2, type_graphql_1.Ctx()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Object, Object]),
+    __metadata("design:paramtypes", [Number, Object]),
     __metadata("design:returntype", Promise)
 ], PostResolver.prototype, "posts", null);
 __decorate([
