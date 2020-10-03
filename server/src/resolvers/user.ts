@@ -62,6 +62,7 @@ export class UserResolver {
     await sendEmail(
       email,
       `<a href="http://localhost:3000/change-password/${token}">reset password</a>`
+      // must be changed to environment variable and set up real email provider
     );
 
     return true;
